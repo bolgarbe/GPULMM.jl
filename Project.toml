@@ -1,0 +1,13 @@
+name = "GPULMM"
+uuid = "f43ee155-8a19-44d7-9b89-14307b48315c"
+authors = ["bj0rn <bolgarbe@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
