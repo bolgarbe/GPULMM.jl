@@ -18,6 +18,7 @@ SnpArrays = "4e780e97-f5bf-4111-9dc4-b70aaf691b06"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+Distributions = "0.25"
 julia = "1.8"
 
 [extras]
