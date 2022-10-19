@@ -1,6 +1,8 @@
 module GPULMM
 
 export fit_components
+export SetTest
+export p_value
 
 using SnpArrays
 using LinearAlgebra

@@ -3,12 +3,26 @@ struct SetTest{T<:Real,DVecT<:AbstractArray{T,1},DMatT<:AbstractArray{T,2}}
     y::DVecT
 end
 
-function SetTest(vc::VarianceComponents2{T,CuArray{T,2}}) where {T<:Real}
-
+function SetTest(vc::VarianceComponents2{T,DMatT},y::DVecT) where {T<:Real, DVecT<:AbstractArray{T,1}, DMatT<:AbstractArray{T,2}}
+    C = vc.comp[1] .* vc.K + vc.comp[2]*I
+    chol = cholesky!(C)
+    SetTest(chol,y)
 end
 
-function (st::SetTest{T,DMatT})(S::DMatT)
+function p_value(st::SetTest{T,DVecT,DMatT}, S::DMatT) where {T<:Real,DVecT<:CuArray{T,1},DMatT<:CuArray{T,2}}
+    CiS  = st.C\S
+    A    = CiS'st.y
+    grad = dot(A,A)/2
+    ev   = Array(CUDA.CUSOLVER.syevd!('N','U',S'CiS)) ./ 2
+    return grad,1-pval_saddle(grad,ev)
+end
 
+function p_value(st::SetTest{T,Array{T,1},Array{T,2}},S::Array{T,2}) where {T<:Real}
+    CiS  = st.C\S
+    A    = CiS'st.y
+    grad = dot(A,A)/2
+    ev   = eigvals(S'CiS) ./ 2
+    return grad,1-pval_saddle(grad,ev)
 end
 
 function saddle(x,λ)
@@ -37,14 +51,3 @@ function pval_saddle(x,a)
     res = saddle(x,a)
     isnan(res) ? 1 - cdf(Chisq(df),x/scl) : 1-res
 end
-
-function pval_sumchi2(vc::VarianceComponents2{T,CuArray{T,2}},u::Vector{T},S::CuArray{T,2}) where {T<:Real}
-    #C = vc.comp[1]*vc.K + vc.comp2[2]*I
-    #CiS = bcg_solve(cov,S)
-    #A   = CiS'obj.y
-
-    #grad = dot(A,A)/2
-    #e    = eigvals(Array(S'CiS)./2)
-    #return grad,1-pval_saddle(grad,e)
-end
-
