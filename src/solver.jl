@@ -1,8 +1,8 @@
 struct BCGIterable{T<:Real,
         DMatT<:AbstractArray{T,2},
+        VCT<:VarianceComponents{T,DMatT},
         CMatT<:Array{T,2},
-        DTsrT<:AbstractArray{T,3},
-        VCT<:VarianceComponents{T,DMatT}}
+        DTsrT<:AbstractArray{T,3}}
     A::VCT
     b::DMatT
     x::DMatT
@@ -48,6 +48,18 @@ function iterate(it::BCGIterable, iteration::Int=start(it))
     sqrt.(it.residual), iteration+1
 end
 
+function reset!(it::BCGIterable)
+    @. it.x = 0
+    @. it.c = 0
+    copyto!(it.r,it.b)
+    copyto!(it.u,it.b)
+    it.residual .= sum(it.r.^2,dims=1)
+    @. it.prev_residual = 1
+    @. it.α = 0
+    @. it.β = 0
+    @. it.Q = 0
+end
+
 function _Q_tensor(b::CuArray{T,2},maxiter::Int) where {T<:Real}
     CuArray{T,3}(undef,size(b,1),maxiter,size(b,2))
 end
@@ -56,7 +68,7 @@ function _Q_tensor(b::Array{T,2},maxiter::Int) where {T<:Real}
     zeros(T,size(b,1),maxiter,size(b,2))
 end
 
-function bcg_iterator!(A::VarianceComponents{T,MatT}, b::MatT;
+function BCGIterable(A::VarianceComponents{T,MatT}, b::MatT;
     tol = sqrt(eps(T)),
     maxiter::Int = size(A, 2),
 ) where {T<:Real, MatT <: AbstractArray{T}}
@@ -84,15 +96,11 @@ function estimate_logdet(it)
     tl = (sqrt.(it.β)./it.α)[1:end-1,:]
     ld_est = 0.
     num_est = 0
-    for i in 1:size(td,2)
-        try
-            T  = SymTridiagonal(td[:,i],tl[:,i])
-            Te,Tv = eigen(T)
-            ld_est += dot(log.(Te),Tv[1,:].^2)
-            num_est += 1
-        catch e
-            println(i,e)
-        end
+    for i in axes(td,2)
+        T  = SymTridiagonal(td[:,i],tl[:,i])
+        Te,Tv = eigen(T)
+        ld_est += dot(log.(Te),Tv[1,:].^2)
+        num_est += 1
     end
     ld_est * size(it.A.K,1)/num_est
 end
