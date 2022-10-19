@@ -26,7 +26,6 @@ function Objective(K::CuArray{T,2},y::CuArray{T,1}; num_samples=30, maxiter=30) 
     Objective(it,Ksol,Ksmp)
 end
 
-
 function (o::Objective{T})(u::Vector{T},grad::Vector{T}) where T<:Real
     reset!(o.it)
     o.it.A.comp .= log1pexp.(u)

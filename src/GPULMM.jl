@@ -1,6 +1,6 @@
 module GPULMM
 
-export fit_base
+export fit_components
 
 using SnpArrays
 using LinearAlgebra
@@ -10,6 +10,8 @@ using NNlibCUDA
 using LogExpFunctions
 using Flux
 using ProgressMeter
+using Roots
+using Distributions
 
 import Base.iterate
 import Flux.update!
@@ -17,6 +19,6 @@ import Flux.update!
 include("variance_components.jl")
 include("solver.jl")
 include("objective.jl")
-include("optimize.jl")
+include("stats.jl")
 
 end
