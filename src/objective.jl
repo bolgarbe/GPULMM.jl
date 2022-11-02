@@ -30,9 +30,11 @@ function (o::Objective{T})(u::Vector{T},grad::Vector{T}) where T<:Real
     reset!(o.it)
     o.it.A.comp .= log1pexp.(u)
 
+    num_iters = 0
     for (iteration, item) in enumerate(o.it)
+        num_iters += 1
     end
-    ld = estimate_logdet(o.it)
+    ld = estimate_logdet(o.it.α[1:num_iters,:],o.it.β[1:num_iters,:],size(o.it.A.K,1))
     
     p1,p2 = logistic.(u)
     sol   = @view o.it.x[:,1]

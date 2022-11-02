@@ -22,7 +22,7 @@ end
 
 @inline converged(it::BCGIterable) = all(@. sqrt(it.residual) ≤ it.reltol)
 @inline start(it::BCGIterable) = 0
-@inline done(it::BCGIterable, iteration::Int) = iteration ≥ it.maxiter # || converged(it)
+@inline done(it::BCGIterable, iteration::Int) = iteration ≥ it.maxiter  || converged(it)
 
 function iterate(it::BCGIterable, iteration::Int=start(it))
     if done(it, iteration) return nothing end
@@ -90,17 +90,17 @@ function BCGIterable(A::VarianceComponents{T,MatT}, b::MatT;
     )
 end
 
-function estimate_logdet(it)
-    td = 1 ./ it.α
-    td[2:end,:] .+= (it.β./it.α)[1:end-1,:]
-    tl = (sqrt.(it.β)./it.α)[1:end-1,:]
+function estimate_logdet(α::MatT,β::MatT,N::Int) where {T<:Real, MatT<:AbstractArray{T}}
+    td = 1 ./ α
+    td[2:end,:] .+= (β./α)[1:end-1,:]
+    tl = (sqrt.(β)./α)[1:end-1,:]
     ld_est = 0.
     num_est = 0
     for i in axes(td,2)
-        T  = SymTridiagonal(td[:,i],tl[:,i])
-        Te,Tv = eigen(T)
+        TD = SymTridiagonal(td[:,i],tl[:,i])
+        Te,Tv = eigen(TD)
         ld_est += dot(log.(Te),Tv[1,:].^2)
         num_est += 1
     end
-    ld_est * size(it.A.K,1)/num_est
+    ld_est * N/num_est
 end
